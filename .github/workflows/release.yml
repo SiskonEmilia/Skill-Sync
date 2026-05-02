@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - run: cargo build --release
+
+      - name: Package (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          mkdir release
+          cp target/release/sync.exe release/
+          cp install.ps1 release/
+          cp -r claude release/
+          cp -r opencode release/
+          cd release && 7z a ../skill-sync-${{ github.ref_name }}-windows-x64.zip *
+
+      - name: Package (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          mkdir release
+          cp target/release/sync release/
+          cp install.sh release/
+          cp -r claude release/
+          cp -r opencode release/
+          cd release && tar czf ../skill-sync-${{ github.ref_name }}-linux-x64.tar.gz *
+
+      - name: Package (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          mkdir release
+          cp target/release/sync release/
+          cp install.sh release/
+          cp -r claude release/
+          cp -r opencode release/
+          cd release && tar czf ../skill-sync-${{ github.ref_name }}-macos-x64.tar.gz *
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            skill-sync-*.zip
+            skill-sync-*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
