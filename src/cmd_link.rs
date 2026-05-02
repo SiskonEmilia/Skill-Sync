@@ -19,6 +19,25 @@ pub fn run(name: &str, cli: Cli, repo_override: Option<std::path::PathBuf>) -> R
 
     let link = cli.local_skill_root(&home).join(name);
 
+    let is_link = if cfg!(windows) {
+        platform::is_junction(&link)
+    } else {
+        Path::is_symlink(&link)
+    };
+
+    if link.join("SKILL.md").exists() && !is_link {
+        let local_content = std::fs::read_to_string(link.join("SKILL.md"))
+            .unwrap_or_default();
+        let repo_content = std::fs::read_to_string(target.join("SKILL.md"))
+            .unwrap_or_default();
+        if local_content != repo_content {
+            return Err(format!(
+                "'{}' is a local skill with unsaved changes — copy it to the sync repo first, then re-run sync link",
+                link.display()
+            ));
+        }
+    }
+
     if let Some(parent) = link.parent() {
         std::fs::create_dir_all(parent)
             .map_err(|e| format!("failed to create parent dir '{}': {e}", parent.display()))?;
@@ -26,7 +45,6 @@ pub fn run(name: &str, cli: Cli, repo_override: Option<std::path::PathBuf>) -> R
 
     platform::create_link(&target, &link)?;
 
-    // Verify
     let verify_path = link.join("SKILL.md");
     verify_path.metadata().map_err(|e| {
         format!(

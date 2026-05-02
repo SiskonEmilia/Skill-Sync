@@ -118,6 +118,63 @@ fn test_status_command_no_crash() {
             return;
         }
     }
-    // Neither skills dir exists — status should still succeed without crash
     skill_sync::cmd_status::run().unwrap();
+}
+
+#[test]
+fn test_link_refuses_unsaved_local_skill() {
+    use tempfile::TempDir;
+
+    let dir = TempDir::new().unwrap();
+    let name = "skill-sync-test-refuse";
+    std::fs::create_dir_all(dir.path().join("claude").join(name)).unwrap();
+    std::fs::write(
+        dir.path().join("claude").join(name).join("SKILL.md"),
+        "---\nname: skill-sync-test-refuse\ndescription: a\n---\nrepo version",
+    )
+    .unwrap();
+    std::fs::create_dir_all(dir.path().join("opencode")).unwrap();
+
+    let home = home_dir().unwrap();
+    let local = Cli::Claude.local_skill_root(&home).join(name);
+    let _ = platform::remove_link(&local);
+    let _ = std::fs::remove_dir_all(&local);
+    std::fs::create_dir_all(&local).unwrap();
+    std::fs::write(local.join("SKILL.md"), "---\nname: skill-sync-test-refuse\ndescription: b\n---\nlocal version")
+        .unwrap();
+
+    let result = skill_sync::cmd_link::run(name, Cli::Claude, Some(dir.path().to_path_buf()));
+    assert!(result.is_err());
+    assert!(result.unwrap_err().contains("unsaved changes"));
+
+    std::fs::remove_dir_all(&local).unwrap();
+}
+
+#[test]
+fn test_link_allows_matching_content() {
+    use tempfile::TempDir;
+
+    let dir = TempDir::new().unwrap();
+    let name = "skill-sync-test-match";
+    std::fs::create_dir_all(dir.path().join("claude").join(name)).unwrap();
+    let content = "---\nname: skill-sync-test-match\ndescription: a\n---\n";
+    std::fs::write(
+        dir.path().join("claude").join(name).join("SKILL.md"),
+        content,
+    )
+    .unwrap();
+    std::fs::create_dir_all(dir.path().join("opencode")).unwrap();
+
+    let home = home_dir().unwrap();
+    let local = Cli::Claude.local_skill_root(&home).join(name);
+    let _ = platform::remove_link(&local);
+    let _ = std::fs::remove_dir_all(&local);
+    std::fs::create_dir_all(&local).unwrap();
+    std::fs::write(local.join("SKILL.md"), content).unwrap();
+
+    skill_sync::cmd_link::run(name, Cli::Claude, Some(dir.path().to_path_buf())).unwrap();
+    assert!(platform::is_junction(&local));
+
+    let _ = platform::remove_link(&local);
+    let _ = std::fs::remove_dir_all(&local);
 }
