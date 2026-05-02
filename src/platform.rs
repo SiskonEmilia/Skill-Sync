@@ -5,7 +5,10 @@ mod imp {
     pub fn create_link(target: &Path, link: &Path) -> Result<(), String> {
         if is_junction(link) {
             junction::delete(link).map_err(|e| {
-                format!("failed to delete existing junction at '{}': {e}", link.display())
+                format!(
+                    "failed to delete existing junction at '{}': {e}",
+                    link.display()
+                )
             })?;
             if link.exists() {
                 std::fs::remove_dir(link).map_err(|e| {

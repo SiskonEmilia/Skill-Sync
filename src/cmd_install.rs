@@ -72,11 +72,7 @@ pub fn run(repo_override: Option<std::path::PathBuf>) -> Result<(), String> {
                     continue;
                 }
 
-                cmd_link::run(
-                    &name,
-                    *cli,
-                    Some(repo.root.clone()),
-                )?;
+                cmd_link::run(&name, *cli, Some(repo.root.clone()))?;
                 ok += 1;
             }
         }
