@@ -69,6 +69,11 @@ enum RepoAction {
     },
     /// List all registered repos
     List,
+    /// Set or show the default repo for new skills
+    Default {
+        /// Path to set as default. Omit to show current default.
+        path: Option<PathBuf>,
+    },
 }
 
 fn parse_cli(s: &str) -> Result<Cli, String> {
@@ -101,6 +106,10 @@ fn main() {
             RepoAction::Add { path } => cmd_repo::add(path),
             RepoAction::Remove { path } => cmd_repo::remove(path),
             RepoAction::List => cmd_repo::list(),
+            RepoAction::Default { path } => match path {
+                Some(p) => cmd_repo::set_default(p),
+                None => cmd_repo::show_default(),
+            },
         },
     };
 
