@@ -5,17 +5,19 @@ use crate::repo::{home_dir, Repo};
 use crate::types::Cli;
 
 pub fn run(name: &str, cli: Cli, repo_override: Option<std::path::PathBuf>) -> Result<(), String> {
-    let repo = Repo::detect(repo_override)?;
+    let repos = Repo::all(repo_override)?;
     let home = home_dir()?;
 
-    let target = repo.skill_dir(name, cli);
-    if !target.join("SKILL.md").exists() {
-        return Err(format!(
-            "skill '{}' not found in repo at '{}'",
-            name,
-            target.display()
-        ));
-    }
+    let target = repos
+        .iter()
+        .map(|r| r.skill_dir(name, cli))
+        .find(|d| d.join("SKILL.md").exists())
+        .ok_or_else(|| {
+            format!(
+                "skill '{}' not found for {} in any registered repo",
+                name, cli
+            )
+        })?;
 
     let link = cli.local_skill_root(&home).join(name);
 

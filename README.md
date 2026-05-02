@@ -23,16 +23,33 @@ The install script compiles the Rust binary and creates junctions (Windows) or s
 
 Skills are stored as real files in your sync repo. Local skill directories are transparent junctions/symlinks pointing into the repo. Push from one device, pull on another — no manual file copying.
 
+## Multi-Repo Support
+
+You can split skills across multiple repos (e.g. public + private):
+
+```bash
+sync repo add ~/skill-sync            # public repo
+sync repo add ~/skill-sync-private    # private repo
+sync install                          # links skills from all repos
+```
+
+Each repo only needs a `claude/` or `opencode/` directory containing skill subdirectories. The `install` and `link` commands scan all registered repos.
+
+Config is stored at `~/.config/skill-sync/repos` (one path per line).
+
 ## Commands
 
 ```
-sync install              Scan repo and create links for all skills
+sync install              Scan all repos and create links for all skills
 sync link <name> <cli>    Link one skill (cli = claude | opencode)
 sync unlink <name> <cli>  Remove a skill link
 sync status               List all local skills and their link status
+sync repo add <path>      Register a skill repo
+sync repo remove <path>   Unregister a skill repo
+sync repo list            List registered repos
 ```
 
-Use `--repo <path>` to override auto-detection of the sync repo root.
+Use `--repo <path>` to target a single repo explicitly (bypasses multi-repo config).
 
 ## Prerequisites
 

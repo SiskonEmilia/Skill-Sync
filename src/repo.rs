@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 
+use crate::config;
 use crate::types::Cli;
 
 #[derive(Debug)]
@@ -8,7 +9,7 @@ pub struct Repo {
 }
 
 fn is_repo_root(dir: &Path) -> bool {
-    dir.join("claude").is_dir() && dir.join("opencode").is_dir()
+    dir.join("claude").is_dir() || dir.join("opencode").is_dir()
 }
 
 impl Repo {
@@ -18,9 +19,8 @@ impl Repo {
                 Ok(Repo { root: p })
             } else {
                 Err(format!(
-                    "not a valid skill-sync repo (missing '{}' or '{}')",
-                    p.join("claude").display(),
-                    p.join("opencode").display()
+                    "not a valid skill-sync repo (need 'claude/' or 'opencode/' in '{}')",
+                    p.display()
                 ))
             };
         }
@@ -36,7 +36,7 @@ impl Repo {
                 Some(parent) => current = parent.to_path_buf(),
                 None => {
                     return Err(format!(
-                        "not a valid skill-sync repo — no 'claude/' and 'opencode/' found in or above '{}'",
+                        "not a valid skill-sync repo — no 'claude/' or 'opencode/' found in or above '{}'",
                         exe.parent().unwrap_or_else(|| Path::new(".")).display()
                     ));
                 }
@@ -44,6 +44,35 @@ impl Repo {
         }
 
         Ok(Repo { root: current })
+    }
+
+    pub fn all(repo_override: Option<PathBuf>) -> Result<Vec<Self>, String> {
+        if let Some(p) = repo_override {
+            return Ok(vec![Self::detect(Some(p))?]);
+        }
+
+        let configured = config::load_repos()?;
+        if configured.is_empty() {
+            return Ok(vec![Self::detect(None)?]);
+        }
+
+        let mut repos = Vec::new();
+        for path in configured {
+            if is_repo_root(&path) {
+                repos.push(Repo { root: path });
+            } else {
+                eprintln!(
+                    "Warning: '{}' is not a valid skill-sync repo — skipping",
+                    path.display()
+                );
+            }
+        }
+
+        if repos.is_empty() {
+            return Err("no valid repos found in config".to_string());
+        }
+
+        Ok(repos)
     }
 
     pub fn skill_dir(&self, name: &str, cli: Cli) -> PathBuf {

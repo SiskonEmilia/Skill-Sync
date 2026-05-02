@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use clap::{Args, Parser, Subcommand};
 use skill_sync::cmd_install;
 use skill_sync::cmd_link;
+use skill_sync::cmd_repo;
 use skill_sync::cmd_status;
 use skill_sync::types::Cli;
 
@@ -18,14 +19,14 @@ struct CliApp {
 
 #[derive(Args)]
 struct GlobalArgs {
-    /// Path to the skill-sync repo. Auto-detected from binary location if omitted.
+    /// Path to a skill-sync repo. Auto-detected from config or binary location if omitted.
     #[arg(long, global = true)]
     repo: Option<PathBuf>,
 }
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Scan the repo and create junctions/symlinks for all skills
+    /// Scan all registered repos and create junctions/symlinks for all skills
     Install,
 
     /// Create a junction/symlink linking a local skill dir to the repo
@@ -46,6 +47,28 @@ enum Commands {
 
     /// List all local skills and their sync status
     Status,
+
+    /// Manage registered skill repos
+    Repo {
+        #[command(subcommand)]
+        action: RepoAction,
+    },
+}
+
+#[derive(Subcommand)]
+enum RepoAction {
+    /// Register a skill repo
+    Add {
+        /// Path to the repo directory
+        path: PathBuf,
+    },
+    /// Unregister a skill repo
+    Remove {
+        /// Path to the repo directory
+        path: PathBuf,
+    },
+    /// List all registered repos
+    List,
 }
 
 fn parse_cli(s: &str) -> Result<Cli, String> {
@@ -74,6 +97,11 @@ fn main() {
             cmd_link::unlink(&name, cli)
         }
         Commands::Status => cmd_status::run(),
+        Commands::Repo { action } => match action {
+            RepoAction::Add { path } => cmd_repo::add(path),
+            RepoAction::Remove { path } => cmd_repo::remove(path),
+            RepoAction::List => cmd_repo::list(),
+        },
     };
 
     if let Err(e) = result {

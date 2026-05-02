@@ -3,20 +3,27 @@ mod imp {
     use std::path::Path;
 
     pub fn create_link(target: &Path, link: &Path) -> Result<(), String> {
-        if link.exists() {
-            if link.is_dir() && !link.is_symlink() {
+        if is_junction(link) {
+            junction::delete(link).map_err(|e| {
+                format!("failed to delete existing junction at '{}': {e}", link.display())
+            })?;
+            if link.exists() {
+                std::fs::remove_dir(link).map_err(|e| {
+                    format!("failed to remove residual dir at '{}': {e}", link.display())
+                })?;
+            }
+        } else if link.exists() {
+            if link.is_dir() {
                 std::fs::remove_dir_all(link).map_err(|e| {
                     format!("failed to remove existing dir at '{}': {e}", link.display())
                 })?;
             } else {
-                std::fs::remove_dir(link)
-                    .or_else(|_| std::fs::remove_file(link))
-                    .map_err(|e| {
-                        format!(
-                            "failed to remove existing entry at '{}': {e}",
-                            link.display()
-                        )
-                    })?;
+                std::fs::remove_file(link).map_err(|e| {
+                    format!(
+                        "failed to remove existing entry at '{}': {e}",
+                        link.display()
+                    )
+                })?;
             }
         }
 
@@ -51,7 +58,7 @@ mod imp {
     }
 
     pub fn is_junction(path: &Path) -> bool {
-        junction::exists(path).unwrap_or(false)
+        junction::get_target(path).is_ok()
     }
 
     pub fn read_link(path: &Path) -> Option<String> {
