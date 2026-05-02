@@ -38,9 +38,11 @@ Synchronize agent skills across multiple devices using a GitHub repository.
 ### Push a skill
 
 1. Agent reads this skill, determines if user has a new or modified skill
-2. Copy local skill directory into `~/skill-sync/<cli>/<skill-name>/`
-3. Run `sync link <skill-name> <cli>` to replace local dir with junction
-4. `git add`, `git commit`, `git push` in the sync repo
+2. Copy local skill directory into `~/skill-sync/<cli>/<skill-name>/` (the CLI the skill originates from)
+3. Apply the Compatibility adapter rules below to generate the adapted version for the other CLI
+4. Copy the adapted version into the other CLI's directory (e.g. `~/skill-sync/opencode/<skill-name>/` if the source was Claude Code)
+5. Run `sync link <skill-name> <cli>` to replace local dir with junction — run for both claude and opencode
+6. `git add`, `git commit`, `git push` in the sync repo
 
 ### Pull skills from repo
 
