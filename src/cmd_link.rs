@@ -26,10 +26,8 @@ pub fn run(name: &str, cli: Cli, repo_override: Option<std::path::PathBuf>) -> R
     };
 
     if link.join("SKILL.md").exists() && !is_link {
-        let local_content = std::fs::read_to_string(link.join("SKILL.md"))
-            .unwrap_or_default();
-        let repo_content = std::fs::read_to_string(target.join("SKILL.md"))
-            .unwrap_or_default();
+        let local_content = std::fs::read_to_string(link.join("SKILL.md")).unwrap_or_default();
+        let repo_content = std::fs::read_to_string(target.join("SKILL.md")).unwrap_or_default();
         if local_content != repo_content {
             return Err(format!(
                 "'{}' is a local skill with unsaved changes — copy it to the sync repo first, then re-run sync link",

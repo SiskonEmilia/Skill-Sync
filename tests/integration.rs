@@ -140,8 +140,11 @@ fn test_link_refuses_unsaved_local_skill() {
     let _ = platform::remove_link(&local);
     let _ = std::fs::remove_dir_all(&local);
     std::fs::create_dir_all(&local).unwrap();
-    std::fs::write(local.join("SKILL.md"), "---\nname: skill-sync-test-refuse\ndescription: b\n---\nlocal version")
-        .unwrap();
+    std::fs::write(
+        local.join("SKILL.md"),
+        "---\nname: skill-sync-test-refuse\ndescription: b\n---\nlocal version",
+    )
+    .unwrap();
 
     let result = skill_sync::cmd_link::run(name, Cli::Claude, Some(dir.path().to_path_buf()));
     assert!(result.is_err());
