@@ -40,14 +40,6 @@ Use `--repo <path>` to override auto-detection of the sync repo root.
 - **Linux / macOS**: Standard symlink support (built-in)
 - Rust toolchain (for compilation)
 
-## Documentation
-
-| Document | Language |
-|----------|----------|
-| [Goals & Scope](docs/internal/goals.md) | 中文 |
-| [Design Document](docs/internal/design.md) | 中文 |
-| [Implementation Report](docs/internal/implementation.md) | 中文 |
-
 ## Project Structure
 
 ```
